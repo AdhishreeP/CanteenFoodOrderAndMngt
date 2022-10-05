@@ -182,6 +182,8 @@ def editItems():
 
             message = "Item updated successfully!"
             return render_template("editItems.html", message=message)
+global ls
+ls = []
 
 # displaying entire menu to the user by fetching food items from the database
 @app.route('/menu-items', methods=["GET", "POST"])
@@ -200,7 +202,7 @@ def display_menu():
             d = [data.get('item_name'), data.get('item_img_link'), data.get('item_price'), key]
             data_to_display.append(d)
 
-        return render_template("menu.html", data=data_to_display)
+        return render_template("menu.html", data=data_to_display, ls = ls)
     else:
         
         #set the session user here
@@ -210,12 +212,12 @@ def display_menu():
         #getting product id, name and quantity
         quantity = request.form.get('quantity')
         item_id = request.form.get('item_id')
-
+        
         #check if quantity is null, show the error
         if(quantity==""):
             message = "Please select the quantity of the item."
             count = int(request.form.get('item_counter'))
-            return render_template('menu.html', data=data_to_display, message = message, c = count)
+            return render_template('menu.html', data=data_to_display, message = message, c = count, ls = ls)
         
         res = db.collection('Food_Items').document(item_id).get()
         dict = res.to_dict()
@@ -226,12 +228,12 @@ def display_menu():
         docs = (db.collection('users').where('email', '==', user).get())
         for doc in docs:
             key = doc.id
-            
+           
         #setting the item name and quatity into 'Buffer' collection
         data = {'item_name' : name, 'item_quantity' : quantity}
         db.collection('users').document(key).collection('Buffer').add(data)
-       
-        return render_template('menu.html', data=data_to_display, name = name)
+        ls.append(name)
+        return render_template('menu.html', data=data_to_display, ls = ls)
        
 if __name__ == '__main__':
     app.run(debug=True)
