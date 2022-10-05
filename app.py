@@ -79,6 +79,8 @@ def login():
         if(password == user_password):
             # password is correct
             # this shows user exists, direct them to the food-menu page
+            #and add the curent user to the session
+            session['current_user'] = user_email
             return redirect(url_for('display_menu'))
             
             
@@ -160,7 +162,6 @@ def editItems():
         item_price = request.form.get("price")
 
         flag = 0
-
         docs = db.collection('Food_Items').get()
         for doc in docs:
             print(doc.to_dict())
@@ -172,30 +173,65 @@ def editItems():
                 continue
 
         if flag == 0:
-            message = "Specified Item does not exist!, Add it to the database!"
+            message = "Specified item does not exist!, Add it to the database!"
             return render_template("editItems.html", message=message)
         else:
             updated_dict = {"item_img_link": item_image_link,
                             "item_price": item_price}
             db.collection('Food_Items').document(key).update(updated_dict)
 
-            message = "Item Updated successfully!"
+            message = "Item updated successfully!"
             return render_template("editItems.html", message=message)
 
 # displaying entire menu to the user by fetching food items from the database
 @app.route('/menu-items', methods=["GET", "POST"])
 def display_menu():
-    
+    global key
+    global data_to_display
     if  request.method == "GET":
         docs = db.collection('Food_Items').get()
         data_to_display = []
 
         for doc in docs:
             data = doc.to_dict()
-            d = [data['item_name'], data['item_img_link'], data['item_price']]
+            #print(data)
+            key = doc.id
+            #appending data to display on the menu page
+            d = [data.get('item_name'), data.get('item_img_link'), data.get('item_price'), key]
             data_to_display.append(d)
 
-        return render_template("menuFinal.html", data=data_to_display)
+        return render_template("menu.html", data=data_to_display)
+    else:
+        
+        #set the session user here
+        # take the username from the login page (use session to retrive the username)
+        user = session.get('current_user', None)
+
+        #getting product id, name and quantity
+        quantity = request.form.get('quantity')
+        item_id = request.form.get('item_id')
+
+        #check if quantity is null, show the error
+        if(quantity==""):
+            message = "Please select the quantity of the item."
+            count = int(request.form.get('item_counter'))
+            return render_template('menu.html', data=data_to_display, message = message, c = count)
+        
+        res = db.collection('Food_Items').document(item_id).get()
+        dict = res.to_dict()
+        
+        name = dict['item_name']
+        
+        #getting user information from the 
+        docs = (db.collection('users').where('email', '==', user).get())
+        for doc in docs:
+            key = doc.id
+            
+        #setting the item name and quatity into 'Buffer' collection
+        data = {'item_name' : name, 'item_quantity' : quantity}
+        db.collection('users').document(key).collection('Buffer').add(data)
+       
+        return render_template('menu.html', data=data_to_display)
        
 if __name__ == '__main__':
     app.run(debug=True)

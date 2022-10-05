@@ -1,0 +1,4 @@
+added the serviceAccountKey to .gitignore beacuse of security issues
+at the time of deploying, we need to use environment varialbes to take the credentials from the json file as it is ignored by git
+
+need to add forget password with otp authentication, so that the authenticated user can only change the password

@@ -1,89 +1,47 @@
-<!-- Menu page for canteen -->
 <!doctype html>
 <html lang="en">
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Menu</title>
+    <title>Menu items</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-gH2yIJqKdNHPEq0n4Mqa/HGKIhSkIHeL5AyhkYV8i59U5AR6csBvApHHNl/vI1Bx" crossorigin="anonymous">
-  </head>
-  <body>
-    <nav class="navbar navbar-expand-lg bg-light">
-      <div class="container-fluid">
-        <a class="navbar-brand" href="/">Food Ordering System</a>
-        <img
-          src="https://cdn-icons-png.flaticon.com/128/5069/5069194.png"
-          alt=""
-          height="23"
-        />
-        <button
-          class="navbar-toggler"
-          type="button"
-          data-bs-toggle="collapse"
-          data-bs-target="#navbarSupportedContent"
-          aria-controls="navbarSupportedContent"
-          aria-expanded="false"
-          aria-label="Toggle navigation"
-        >
-          <span class="navbar-toggler-icon"></span>
-        </button>
-        <div
-          class="collapse navbar-collapse me-auto"
-          id="navbarSupportedContent"
-        >
-          <ul class="navbar-nav ms-auto mb-2 mb-lg-0 fs-5">
-            <li class="nav-item">
-              <a class="nav-link active px-3" aria-current="page" href="/"
-                >Home
-                <img
-                  src="https://cdn-icons-png.flaticon.com/128/3917/3917032.png"
-                  height="20"
-                  alt=""
-                />
-              </a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link active px-3" aria-current="page" href="/login"
-                >User Login
-                <img
-                  src="https://cdn-icons-png.flaticon.com/128/5528/5528136.png"
-                  alt=""
-                  height="20"
-                />
-              </a>
-            </li>
-            <li class="nav-item">
-              <a
-                class="nav-link active px-3"
-                aria-current="page"
-                href="/sign-up"
-                >User Signup
-                <img
-                  src="https://cdn-icons-png.flaticon.com/128/3917/3917717.png"
-                  height="20"
-                  alt=""
-                />
-              </a>
-            </li>
-
-            <li class="nav-item">
-              <a
-                class="nav-link active px-3"
-                aria-current="page"
-                href="/admin_login"
-                >Admin Login
-                <img
-                  src="https://cdn-icons-png.flaticon.com/128/3917/3917576.png"
-                  alt=""
-                  height="20"
-                />
-              </a>
-            </li>
-          </ul>
+</head>
+<body>
+    <h1 class="text-center">Canteen Menu</h1>
+    <hr> 
+    <div class="mt-5">
+        <div class="">
+                <div class="row">
+                {% set count = namespace(value=0) %}
+                {% for d in data %}
+                {% set count.value = count.value + 1 %}
+                <div class="col-4 d-flex align-items-center justify-content-center">
+                    <form action="/menu-items" method="POST" style="text-align: center;">
+                      <div class="rounded-3 shadow-sm rounded border border-2 px-5 py-3 mb-5">
+                    <div class="feature-icon d-inline-flex justify-content-center bg-gradient">
+                        <img src="{{ d[1] }}" alt="" width="200" height="200">
+                        <svg class="bi" width="1em" height="1em"><use xlink:href="#toggles2"></use></svg>
+                    </div>
+                    <h3 class="fs-2">{{ d[0]|capitalize }}</h3>
+                    <p>
+                        Price : {{ d[2] }}<br>
+                        Quantity : <input type="number" min="1" max="50" class="mb-2" name="quantity"><br>
+                        <hr>
+                          <input type="hidden" name="item_id" value="{{d[3]}}">
+                          <input type="hidden" name="item_counter" value="{{count['value']}}">
+                        {% if c == count['value'] %}
+                        <p class="text-center text-danger">{{message}}</p>
+                        {% endif %}
+                        <input type="image" src="https://t3.ftcdn.net/jpg/00/30/21/50/360_F_30215082_UkRQTbOQsiTtcjkTunYNjFoaaccgkRW5.jpg" value="Add to cart" width="200" height="100" name="AddToCart" id="" class="m-2">
+                    </p>
+                      <svg class="bi" width="1em" height="1em"><use xlink:href="#chevron-right"></use></svg>
+                    </div>
+                    </form>
+                    </div>
+                {% endfor %}
+                </div>
         </div>
-      </div>
-    </nav>
-   
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-A3rJD856KowSb7dwlZdYEkO39Gagi7vIsF0jrRAoQmDKKtQBHUuLZ9AsSv4jD4Xa" crossorigin="anonymous"></script>
+    </div>
   </body>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-A3rJD856KowSb7dwlZdYEkO39Gagi7vIsF0jrRAoQmDKKtQBHUuLZ9AsSv4jD4Xa" crossorigin="anonymous"></script>
 </html>
