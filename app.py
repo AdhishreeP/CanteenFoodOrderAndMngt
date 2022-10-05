@@ -231,7 +231,7 @@ def display_menu():
         data = {'item_name' : name, 'item_quantity' : quantity}
         db.collection('users').document(key).collection('Buffer').add(data)
        
-        return render_template('menu.html', data=data_to_display)
+        return render_template('menu.html', data=data_to_display, name = name)
        
 if __name__ == '__main__':
     app.run(debug=True)
