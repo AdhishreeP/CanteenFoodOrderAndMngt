@@ -1,4 +1,4 @@
-from flask import Flask, render_template, redirect, request, session
+from flask import Flask, render_template, redirect, request, flash, session
 from flask_session import Session
 from email import message
 from urllib import request
@@ -20,7 +20,6 @@ app = Flask(__name__)
 app.config['SESSION_TYPE'] = 'memcached'
 app.config['SECRET_KEY'] = 'super secret key'
 sess = Session()
-
 
 @app.route('/')
 def home():
@@ -81,9 +80,7 @@ def login():
             # this shows user exists, direct them to the food-menu page
             #and add the curent user to the session
             session['current_user'] = user_email
-            return redirect(url_for('display_menu'))
-            
-            
+            return redirect(url_for('display_menu'))          
         else:
             #password is incorrect
             message = "Your password is incorrect. Please try again"
@@ -118,6 +115,7 @@ def signup():
 
         return render_template('/signup.html', message=message)
 
+
 # for admin only
 # adding new items in the menu
 @app.route('/admin/add_items', methods=["GET", "POST"])
@@ -149,6 +147,7 @@ def addItems():
         else:
             message = "Food Item already exists!"
             return render_template("addItems.html", message=message)
+
 
 # for admin only
 # editing existing items in the menu
@@ -182,9 +181,9 @@ def editItems():
 
             message = "Item updated successfully!"
             return render_template("editItems.html", message=message)
+
 global ls
 ls = []
-
 # displaying entire menu to the user by fetching food items from the database
 @app.route('/menu-items', methods=["GET", "POST"])
 def display_menu():
@@ -203,8 +202,7 @@ def display_menu():
             data_to_display.append(d)
 
         return render_template("menu.html", data=data_to_display, ls = ls)
-    else:
-        
+    else:     
         #set the session user here
         # take the username from the login page (use session to retrive the username)
         user = session.get('current_user', None)
@@ -234,7 +232,53 @@ def display_menu():
         db.collection('users').document(key).collection('Buffer').add(data)
         ls.append(name)
         return render_template('menu.html', data=data_to_display, ls = ls)
-       
+
+
+@app.route('/order_summary', methods=["GET"])
+def order_summary():
+    # set the session user here
+    user = session.get('current_user', None)
+
+    data_to_display = []
+    grand_total = 0
+    name = ""
+    # getting user information
+    docsusers = (db.collection('users').where('email', '==', user).get())
+    for docs in docsusers:
+        key = docs.id
+        username = docs.to_dict()["name"]
+        
+    # appending data to display on the order summary page
+    docsbuffer = db.collection('users').document(key).collection('Buffer').get()
+    if docsbuffer == []:
+        print("User didn't select anything")
+        flash("Please select alteast one item.")
+        return redirect(url_for('display_menu')) 
+    for doc in docsbuffer:
+        print(doc)
+        data = doc.to_dict()
+        
+        d = [data.get('item_name'),data.get('item_quantity')]
+        name = data.get('item_name')
+        docsfood = db.collection('Food_Items').where('item_name', '==', name ).get()
+        for df in docsfood:
+            dict = df.to_dict()
+            price = dict.get('item_price')
+            d.append(price)
+            break
+
+        #Caculating total price for each item
+        total = int(d[1]) * int(d[2])
+        d.append(total)
+
+        #calculating the total amount of all items
+        grand_total = grand_total + total
+        data_to_display.append(d)
+
+    if request.method == "GET":
+        return render_template("ordersummary.html", data=data_to_display, grand_total=grand_total, user=username)
+
+
 if __name__ == '__main__':
     app.run(debug=True)
     sess.init_app(app)
