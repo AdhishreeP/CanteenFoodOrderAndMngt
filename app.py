@@ -234,7 +234,7 @@ def display_menu():
         return render_template('menu.html', data=data_to_display, ls = ls)
 
 
-@app.route('/order_summary', methods=["GET"])
+@app.route('/order_summary', methods=["GET", "POST"])
 def order_summary():
     # set the session user here
     user = session.get('current_user', None)
@@ -277,8 +277,111 @@ def order_summary():
 
     if request.method == "GET":
         return render_template("ordersummary.html", data=data_to_display, grand_total=grand_total, user=username)
+    else:
+        r_i_name = request.form["remove"]
+        print(r_i_name)
+        return render_template("ordersummary.html", data=data_to_display, grand_total=grand_total, user=username)
+ 
 
+@app.route('/forgot-password', methods=["GET", "POST"])
+def forgot_pass():
 
+    if  request.method == "GET":
+        return render_template('forgotpass.html')
+    else:
+        #get the email
+        user_email = request.form["email"]
+        session['current_user'] = user_email
+        #check if it is available in the users
+        user_ref = db.collection('users').where(
+            "email", "==", f"{user_email}").get()
+
+        #if it is, then redirect the user to the otp page
+        if user_ref != []:
+            return redirect(url_for('otp'))      
+        
+        #else show them an error that the mail doesn't exist
+        else:
+            message = "This email doesn't exist. Please create a new account."
+            return render_template('forgotpass.html', message = message)
+
+#send otp and then reset the password
+@app.route('/otp', methods=["GET", "POST"])
+def otp():
+    global otp
+    if  request.method == "GET":
+        
+        #generate the otp and send mail
+        from multiprocessing import context
+        import random
+        import ssl
+        import smtplib
+        from email.message import EmailMessage
+
+        email_sender = "canteenfoodordering@gmail.com"
+        email_pass = "vcelxbvzlwarrhnk"
+
+        user = session.get('current_user', None)
+        email_receiver = user
+
+        subject = "Sign-up into Canteen Food Ordering and Management System"
+
+        otp = random.randint(0,999999)
+
+        body = f"""
+        Your otp for creating an account is: {otp}.
+        Please don't share it with anyone.
+        """
+
+        em = EmailMessage()
+        em['From'] = email_sender
+        em['To'] = email_receiver
+        em['subject'] = subject
+        em.set_content(body)
+
+        context = ssl.create_default_context()
+        with smtplib.SMTP_SSL('smtp.gmail.com',465, context=context) as smtp:
+            smtp.login(email_sender, email_pass)
+            smtp.sendmail(email_sender, email_receiver, em.as_string())
+        
+        return render_template('otp.html')
+    else:
+        #check the otp is correct or not
+        user_otp = request.form["otp"]
+        if otp == int(user_otp):
+            #redirect to a new page where password is reset
+            return redirect(url_for('resetpass'))  
+        else:
+            message = "Your OTP is incorrrect."
+            return render_template('otp.html', message = message)    
+
+@app.route('/reset-passsowrd', methods=["GET", "POST"])
+def resetpass():
+    if request.method == "GET":
+        return render_template('resetpass.html')
+    else:
+        #take the new password
+        newpass = request.form["password"]
+
+        #update the password by retrieving the session of the user
+        user = session.get('current_user', None)
+
+        # get the document refernce for the particular user
+        user_ref = db.collection('users').where("email", "==", f"{user}").get()
+
+        # grab the document id
+        global doc_id
+        for user in user_ref:
+            doc_id = user.id
+
+        # update the password
+        user = db.collection('users').document(f"{doc_id}")
+        user.update({"password": newpass})
+
+        # ender the page
+        message = "Password updated successfully!!!"
+        return render_template('resetpass.html', message=message)
+        
 if __name__ == '__main__':
     app.run(debug=True)
     sess.init_app(app)

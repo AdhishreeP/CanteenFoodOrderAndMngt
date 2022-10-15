@@ -3,14 +3,14 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-   <title>Order Summary</title>
+   <title> Order Summary</title>
 <!-- CSS only -->
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-Zenh87qX5JnK2Jl0vWa8Ck2rdkQ2Bzep5IDxbcnCeuOxjzrPF/et3URy9Bv1WTRi" crossorigin="anonymous">
 </head>
 <body>
 
 <div class="container position-absolute top-50 start-50 translate-middle text-center border border-secondary w-70 p-3 rounded-3 mx-auto">
-  <h1>Your Order Summary</h1>
+  <h1>Your Order</h1>
     <br>
     <br>
   <h4>
@@ -19,27 +19,37 @@
 
   <br>
     <br>
-  <hr size="10" width="100%" color="#D5F5E3">
+  <hr size="10" width="100%" color="red">
+<form action="/order_summary" method="POST" style="text-align: center;">
   <table class="table">
+
       <tr>
         <th scope="col">Item name</th>
         <th scope="col">Quantity</th>
         <th scope="col">Rate</th>
         <th scope="col">Amount</th>
         <th scope="col">Remove Items</th>
-
-
        </tr>
+
       {% for row in data%}
       <tr>
         {% for col in row %}
-          <td>{{ col |capitalize }}</td>
+          <td>{{ col }}</td>
         {% endfor %}
-        <td><input class="btn btn-danger" type="reset" value="Remove"></td>
+        <td>
+          <button type="submit"  class="btn btn-danger" value="{{row[0]}}" name="remove">Remove</button>            
+        </td>
+
+      
       </tr>
 
       {% endfor %}
-  </table>
+
+      </table>
+</form>
+
+
+
  <br>
   <h4>Total Price To Pay: {{grand_total}} Rs./-</h4>
     <br><br>
