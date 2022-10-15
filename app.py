@@ -324,12 +324,12 @@ def otp():
         user = session.get('current_user', None)
         email_receiver = user
 
-        subject = "Sign-up into Canteen Food Ordering and Management System"
+        subject = "OTP for Resetting the Password"
 
         otp = random.randint(0,999999)
 
         body = f"""
-        Your otp for creating an account is: {otp}.
+        Your OTP for reseting the password is: {otp}.
         Please don't share it with anyone.
         """
 
