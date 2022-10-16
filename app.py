@@ -181,7 +181,54 @@ def editItems():
 
             message = "Item updated successfully!"
             return render_template("editItems.html", message=message)
+@app.route('/order_summary', methods=["GET", "POST"])
+def order_summary():
+    # set the session user here
+    user = session.get('current_user', None)
 
+    data_to_display = []
+    grand_total = 0
+    name = ""
+    # getting user information
+    docsusers = (db.collection('users').where('email', '==', user).get())
+    for docs in docsusers:
+        key = docs.id
+        username = docs.to_dict()["name"]
+        
+    # appending data to display on the order summary page
+    docsbuffer = db.collection('users').document(key).collection('Buffer').get()
+    if docsbuffer == []:
+        print("User didn't select anything")
+        flash("Please select alteast one item.")
+        return redirect(url_for('display_menu')) 
+    for doc in docsbuffer:
+        print(doc)
+        data = doc.to_dict()
+        
+        d = [data.get('item_name'),data.get('item_quantity')]
+        name = data.get('item_name')
+        docsfood = db.collection('Food_Items').where('item_name', '==', name ).get()
+        for df in docsfood:
+            dict = df.to_dict()
+            price = dict.get('item_price')
+            d.append(price)
+            break
+
+        #Caculating total price for each item
+        total = int(d[1]) * int(d[2])
+        d.append(total)
+
+        #calculating the total amount of all items
+        grand_total = grand_total + total
+        data_to_display.append(d)
+
+    if request.method == "GET":
+        return render_template("ordersummary.html", data=data_to_display, grand_total=grand_total, user=username)
+    else:
+        r_i_name = request.form["remove"]
+        print(r_i_name)
+        return render_template("ordersummary.html", data=data_to_display, grand_total=grand_total, user=username)
+ 
 global ls
 ls = []
 # displaying entire menu to the user by fetching food items from the database
@@ -234,55 +281,8 @@ def display_menu():
         return render_template('menu.html', data=data_to_display, ls = ls)
 
 
-@app.route('/order_summary', methods=["GET", "POST"])
-def order_summary():
-    # set the session user here
-    user = session.get('current_user', None)
 
-    data_to_display = []
-    grand_total = 0
-    name = ""
-    # getting user information
-    docsusers = (db.collection('users').where('email', '==', user).get())
-    for docs in docsusers:
-        key = docs.id
-        username = docs.to_dict()["name"]
-        
-    # appending data to display on the order summary page
-    docsbuffer = db.collection('users').document(key).collection('Buffer').get()
-    if docsbuffer == []:
-        print("User didn't select anything")
-        flash("Please select alteast one item.")
-        return redirect(url_for('display_menu')) 
-    for doc in docsbuffer:
-        print(doc)
-        data = doc.to_dict()
-        
-        d = [data.get('item_name'),data.get('item_quantity')]
-        name = data.get('item_name')
-        docsfood = db.collection('Food_Items').where('item_name', '==', name ).get()
-        for df in docsfood:
-            dict = df.to_dict()
-            price = dict.get('item_price')
-            d.append(price)
-            break
-
-        #Caculating total price for each item
-        total = int(d[1]) * int(d[2])
-        d.append(total)
-
-        #calculating the total amount of all items
-        grand_total = grand_total + total
-        data_to_display.append(d)
-
-    if request.method == "GET":
-        return render_template("ordersummary.html", data=data_to_display, grand_total=grand_total, user=username)
-    else:
-        r_i_name = request.form["remove"]
-        print(r_i_name)
-        return render_template("ordersummary.html", data=data_to_display, grand_total=grand_total, user=username)
- 
-
+#forgetting password
 @app.route('/forgot-password', methods=["GET", "POST"])
 def forgot_pass():
 
@@ -355,6 +355,7 @@ def otp():
             message = "Your OTP is incorrrect."
             return render_template('otp.html', message = message)    
 
+#resetting the password
 @app.route('/reset-passsowrd', methods=["GET", "POST"])
 def resetpass():
     if request.method == "GET":
