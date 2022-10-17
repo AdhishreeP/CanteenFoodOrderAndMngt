@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>OTP for Sign-in</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-gH2yIJqKdNHPEq0n4Mqa/HGKIhSkIHeL5AyhkYV8i59U5AR6csBvApHHNl/vI1Bx" crossorigin="anonymous">
+  </head>
+  <body>
+    <nav class="navbar navbar-expand-lg bg-light">
+      <div class="container-fluid">
+        <a class="navbar-brand" href="/">Food Ordering System</a>
+        <img
+          src="https://cdn-icons-png.flaticon.com/128/5069/5069194.png"
+          alt=""
+          height="23"
+        />
+        <button
+          class="navbar-toggler"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#navbarSupportedContent"
+          aria-controls="navbarSupportedContent"
+          aria-expanded="false"
+          aria-label="Toggle navigation"
+        >
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div
+          class="collapse navbar-collapse me-auto"
+          id="navbarSupportedContent"
+        >
+          <ul class="navbar-nav ms-auto mb-2 mb-lg-0 fs-5">
+            <li class="nav-item">
+              <a class="nav-link active px-3" aria-current="page" href="/"
+                >Home
+                <img
+                  src="https://cdn-icons-png.flaticon.com/128/3917/3917032.png"
+                  height="20"
+                  alt=""
+                />
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link active px-3" aria-current="page" href="/login"
+                >User Login
+                <img
+                  src="https://cdn-icons-png.flaticon.com/128/5528/5528136.png"
+                  alt=""
+                  height="20"
+                />
+              </a>
+            </li>
+            <li class="nav-item">
+              <a
+                class="nav-link active px-3"
+                aria-current="page"
+                href="/sign-up"
+                >User Signup
+                <img
+                  src="https://cdn-icons-png.flaticon.com/128/3917/3917717.png"
+                  height="20"
+                  alt=""
+                />
+              </a>
+            </li>
+
+            <li class="nav-item">
+              <a
+                class="nav-link active px-3"
+                aria-current="page"
+                href="/admin_login"
+                >Admin Login
+                <img
+                  src="https://cdn-icons-png.flaticon.com/128/3917/3917576.png"
+                  alt=""
+                  height="20"
+                />
+              </a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+    <div class="container position-absolute top-50 start-50 translate-middle">
+      
+        <form method="post" class="border border-secondary w-50 p-3 rounded-3 mx-auto"
+        action="/otp-to-create-account"
+        >
+        <div class="row m-3">
+          <p class="text-danger">{{message}}</p>
+        </div>
+            <div class="row m-3" >
+                <h1 class="text-center">Please check your mail for 6-digit OTP</h1>
+                <hr>
+            </div>
+            <div class="row mb-3 fs-4 m-3" >
+              <label for="otp" class="col-sm-4 col-form-label"> OTP: </label>
+              <div class="col-sm-6">
+                <input type="text" class="form-control" id="otp" name="otp" required>
+              </div>
+            </div>
+           
+           
+            <div class="d-grid gap-2 d-md-block m-3 w-50 mx-auto text-center">
+              <button class="btn btn-primary m-2 px-4" type="submit">Submit</button>
+              <button class="btn btn-danger m-2 px-4" type="reset">Reset</button>
+            </div>
+            
+          </form>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-A3rJD856KowSb7dwlZdYEkO39Gagi7vIsF0jrRAoQmDKKtQBHUuLZ9AsSv4jD4Xa" crossorigin="anonymous"></script>
+  </body>
+</html>

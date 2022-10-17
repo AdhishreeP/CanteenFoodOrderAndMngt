@@ -96,7 +96,11 @@ def signup():
         name = request.form["name"]
         email = request.form["email"]
         password = request.form["password"]
-
+        
+        session['current_name'] = name
+        session['current_user'] = email
+        session['current_pass'] = password
+        
         # check if the mail already exists
         user_ref = db.collection('users').where(
             "email", "==", f"{email}").get()
@@ -104,18 +108,67 @@ def signup():
             message = "User already exists. Please use a different Email"
             return render_template('signup.html', message=message)
 
-        db.collection('users').add({
+        return redirect(url_for('optforsignin', name = name, email = email, password = password))
+       
+
+@app.route('/otp-to-create-account', methods=["GET", "POST"])
+def optforsignin():
+    global otp
+    if request.method == "GET":
+        #generate the otp and send mail
+        from multiprocessing import context
+        import random
+        import ssl
+        import smtplib
+        from email.message import EmailMessage
+
+        email_sender = "canteenfoodordering@gmail.com"
+        email_pass = "vcelxbvzlwarrhnk"
+
+        user = session.get('current_user', None)
+        email_receiver = user
+
+        subject = "OTP for Sign-in"
+
+        otp = random.randint(0,999999)
+
+        body = f"""
+        Your OTP for creating an account is: {otp}.
+        Please don't share it with anyone.
+        """
+
+        em = EmailMessage()
+        em['From'] = email_sender
+        em['To'] = email_receiver
+        em['subject'] = subject
+        em.set_content(body)
+
+        context = ssl.create_default_context()
+        with smtplib.SMTP_SSL('smtp.gmail.com',465, context=context) as smtp:
+            smtp.login(email_sender, email_pass)
+            smtp.sendmail(email_sender, email_receiver, em.as_string())
+        return render_template('otpforsignin.html')
+    else:
+        #check the otp is correct or not
+        user_otp = request.form["otp"]
+        
+        email = session.get('current_user', None)
+        name = session.get('current_name', None)
+        password = session.get('current_pass', None)
+
+        if otp == int(user_otp):
+            db.collection('users').add({
             'name': name,
             'email': email,
             'password': password
         })
-
-        # display the message of successful account creation
-        message = "User created successfully. Please now login with your username and password"
-
-        return render_template('/signup.html', message=message)
-
-
+            # display the message of successful account creation
+            message = "User created successfully. Please now login with your username and password."
+            return render_template('otpforsignin.html', message = message)  
+        else:
+            message = "Your OTP is incorrrect."
+            return render_template('otpforsignin.html', message = message)   
+    
 # for admin only
 # adding new items in the menu
 @app.route('/admin/add_items', methods=["GET", "POST"])
