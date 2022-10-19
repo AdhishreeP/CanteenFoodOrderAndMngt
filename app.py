@@ -234,6 +234,8 @@ def editItems():
 
             message = "Item updated successfully!"
             return render_template("editItems.html", message=message)
+
+#order summary of the user
 @app.route('/order_summary', methods=["GET", "POST"])
 def order_summary():
     # set the session user here
@@ -247,41 +249,81 @@ def order_summary():
     for docs in docsusers:
         key = docs.id
         username = docs.to_dict()["name"]
-        
+
     # appending data to display on the order summary page
     docsbuffer = db.collection('users').document(key).collection('Buffer').get()
     if docsbuffer == []:
         print("User didn't select anything")
-        flash("Please select alteast one item.")
-        return redirect(url_for('display_menu')) 
+        flash("Please select atleast one item.")
+        return redirect(url_for('display_menu'))
     for doc in docsbuffer:
         print(doc)
+        keybuffer = doc.id
         data = doc.to_dict()
-        
-        d = [data.get('item_name'),data.get('item_quantity')]
+        d = [keybuffer, data.get('item_name'), data.get('item_quantity')]
         name = data.get('item_name')
-        docsfood = db.collection('Food_Items').where('item_name', '==', name ).get()
+        docsfood = db.collection('Food_Items').where('item_name', '==', name).get()
         for df in docsfood:
             dict = df.to_dict()
             price = dict.get('item_price')
             d.append(price)
             break
 
-        #Caculating total price for each item
-        total = int(d[1]) * int(d[2])
+        # Caculating total price for each item
+        total = int(d[2]) * int(d[3])
         d.append(total)
 
-        #calculating the total amount of all items
+        # calculating the total amount of all items
         grand_total = grand_total + total
         data_to_display.append(d)
 
     if request.method == "GET":
         return render_template("ordersummary.html", data=data_to_display, grand_total=grand_total, user=username)
-    else:
-        r_i_name = request.form["remove"]
-        print(r_i_name)
+    
+    if request.method == "POST":
+        remove_item_id = request.form.get('remove_item_id')
+        print(remove_item_id)
+        db.collection('users').document(key).collection('Buffer').document(remove_item_id).delete()
+
+        data_to_display = []
+        grand_total = 0
+
+        # getting user information
+        docsusers = (db.collection('users').where('email', '==', user).get())
+        for docs in docsusers:
+            key = docs.id
+            username = docs.to_dict()["name"]
+
+        # appending data to display on the order summary page
+        docsbuffer = db.collection('users').document(key).collection('Buffer').get()
+        if docsbuffer == []:
+            print("User didn't select anything")
+            flash("The order got empty..! Please select alteast one item.")
+            return redirect(url_for('display_menu'))
+        for doc in docsbuffer:
+            print(doc)
+            keybuffer = doc.id
+            data = doc.to_dict()
+            d = [keybuffer, data.get('item_name'), data.get('item_quantity')]
+            name = data.get('item_name')
+            docsfood = db.collection('Food_Items').where('item_name', '==', name).get()
+            for df in docsfood:
+                dict = df.to_dict()
+                price = dict.get('item_price')
+                d.append(price)
+                break
+
+            # Caculating total price for each item
+            total = int(d[2]) * int(d[3])
+            d.append(total)
+
+            # calculating the total amount of all items
+            grand_total = grand_total + total
+            data_to_display.append(d)
+
         return render_template("ordersummary.html", data=data_to_display, grand_total=grand_total, user=username)
- 
+
+
 global ls
 ls = []
 # displaying entire menu to the user by fetching food items from the database
