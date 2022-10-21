@@ -477,7 +477,48 @@ def resetpass():
         # ender the page
         message = "Password updated successfully!!!"
         return render_template('resetpass.html', message=message)
-        
+
+#order confirmation or cancellation
+@app.route('/proceed', methods=['GET', 'POST'])
+def test(): 
+    if request.method == "POST":
+        if request.form["action"] == "yes":
+            #retrieve the current user's session
+            user = session.get('current_user', None)
+            #retrieve the system date
+
+            #copy the order to the today's collection
+
+            #after copying delete the buffer
+
+            #send the confirmation message
+
+            message = "Your order is confirmed"
+            print("Order confirmed")
+
+        elif request.form["action"] == "no":
+            #retrieve the current user's session
+            user = session.get('current_user', None)
+            
+            #delete the user's buffer
+            docs = db.collection('users').where("email", "==", f"{user}").get()
+            global id
+            for doc in docs:
+                id = doc.id
+
+            items = db.collection('users').document(id).collection('Buffer').get()
+            #deleting each item in the buffer
+            for item in items:
+                item_id = item.id
+                db.collection('users').document(id).collection('Buffer').document(item_id).delete()
+
+            #send the cancellation message
+            message = "Your order is cancelled"
+            print("Order Cancelled")
+        return render_template('final.html', message = message)
+
+    elif request.method =='GET':
+        return render_template('final.html')     
 if __name__ == '__main__':
     app.run(debug=True)
     sess.init_app(app)
