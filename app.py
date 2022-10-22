@@ -485,14 +485,29 @@ def test():
         if request.form["action"] == "yes":
             #retrieve the current user's session
             user = session.get('current_user', None)
+
             #retrieve the system date
+            import datetime
+            x = datetime.datetime.now()
+            cur_date = x.strftime("%d-%m-%Y")
 
             #copy the order to the today's collection
+            docs = db.collection('users').where("email", "==", f"{user}").get()
+            global id
+            for doc in docs:
+                id = doc.id
 
+            items = db.collection('users').document(id).collection('Buffer').get()
+            for item in items:
+                i = item.to_dict()
+                db.collection('Orders').document(f"{cur_date}").collection("current_orders").document(f"{user}").collection("order").add(i)
+            
             #after copying delete the buffer
-
+            for item in items:
+                item_id = item.id
+                db.collection('users').document(id).collection('Buffer').document(item_id).delete()
+            
             #send the confirmation message
-
             message = "Your order is confirmed"
             print("Order confirmed")
 
@@ -502,15 +517,15 @@ def test():
             
             #delete the user's buffer
             docs = db.collection('users').where("email", "==", f"{user}").get()
-            global id
+            global id_user
             for doc in docs:
-                id = doc.id
+                id_user = doc.id_user
 
-            items = db.collection('users').document(id).collection('Buffer').get()
+            items = db.collection('users').document(id_user).collection('Buffer').get()
             #deleting each item in the buffer
             for item in items:
                 item_id = item.id
-                db.collection('users').document(id).collection('Buffer').document(item_id).delete()
+                db.collection('users').document(id_user).collection('Buffer').document(item_id).delete()
 
             #send the cancellation message
             message = "Your order is cancelled"
