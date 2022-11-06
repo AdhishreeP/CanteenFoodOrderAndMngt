@@ -20,8 +20,15 @@
             <p class="text-danger">{{message}}</p>
           </div>
         <h1>Do you want to confirm your order ? </h1>
+        {% if finalConfirm == "confirm" %}
+        <input type ="submit" name="action" value="yes" class="btn btn-success" disabled>
+        <input type ="submit" name="action" value="no" class="btn btn-danger" disabled>
+        {% else %}
         <input type ="submit" name="action" value="yes" class="btn btn-success">
         <input type ="submit" name="action" value="no" class="btn btn-danger">
+        {% endif %}
+
+        
     </form>
  
 </div>

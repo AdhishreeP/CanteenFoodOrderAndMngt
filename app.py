@@ -235,6 +235,7 @@ def editItems():
             message = "Item updated successfully!"
             return render_template("editItems.html", message=message)
 
+
 #order summary of the user
 @app.route('/order_summary', methods=["GET", "POST"])
 def order_summary():
@@ -278,6 +279,7 @@ def order_summary():
         data_to_display.append(d)
 
     if request.method == "GET":
+        session['total'] = grand_total
         return render_template("ordersummary.html", data=data_to_display, grand_total=grand_total, user=username)
     
     if request.method == "POST":
@@ -321,6 +323,8 @@ def order_summary():
             grand_total = grand_total + total
             data_to_display.append(d)
 
+        session['total'] = grand_total
+        print("In post request: ", grand_total)
         return render_template("ordersummary.html", data=data_to_display, grand_total=grand_total, user=username)
 
 
@@ -374,7 +378,6 @@ def display_menu():
         db.collection('users').document(key).collection('Buffer').add(data)
         ls.append(name)
         return render_template('menu.html', data=data_to_display, ls = ls)
-
 
 
 #forgetting password
@@ -478,14 +481,17 @@ def resetpass():
         message = "Password updated successfully!!!"
         return render_template('resetpass.html', message=message)
 
+global finalConfirm
+finalConfirm = "notyet"
 #order confirmation or cancellation
 @app.route('/proceed', methods=['GET', 'POST'])
 def test(): 
+    grand_total = session.get('total', None)
     if request.method == "POST":
         if request.form["action"] == "yes":
             #retrieve the current user's session
             user = session.get('current_user', None)
-
+            finalConfirm = "confirm"
             #retrieve the system date
             import datetime
             x = datetime.datetime.now()
@@ -501,20 +507,22 @@ def test():
             for item in items:
                 i = item.to_dict()
                 db.collection('Orders').document(f"{cur_date}").collection("current_orders").document(f"{user}").collection("order").add(i)
-            
+
+            db.collection('Orders').document(f"{cur_date}").collection("current_orders").document(f"{user}").collection("Order_Total").add({"total" : grand_total })
+
             #after copying delete the buffer
             for item in items:
                 item_id = item.id
                 db.collection('users').document(id).collection('Buffer').document(item_id).delete()
             
             #send the confirmation message
-            message = "Your order is confirmed"
+            message = f"Your order is confirmed. Pay {grand_total} Rs. at the counter"
             print("Order confirmed")
 
         elif request.form["action"] == "no":
             #retrieve the current user's session
             user = session.get('current_user', None)
-            
+            finalConfirm = "confirm"
             #delete the user's buffer
             docs = db.collection('users').where("email", "==", f"{user}").get()
             global id_user
@@ -530,10 +538,12 @@ def test():
             #send the cancellation message
             message = "Your order is cancelled"
             print("Order Cancelled")
-        return render_template('final.html', message = message)
+        print("at final confirmation: ", grand_total)
+        return render_template('final.html', message = message, finalConfirm = finalConfirm )
 
     elif request.method =='GET':
-        return render_template('final.html')     
+        return render_template('final.html' )  
+
 if __name__ == '__main__':
     app.run(debug=True)
     sess.init_app(app)
