@@ -368,7 +368,7 @@ def display_menu():
         
         name = dict['item_name']
         
-        #getting user information from the 
+        #getting user information from the session
         docs = (db.collection('users').where('email', '==', user).get())
         for doc in docs:
             key = doc.id
@@ -498,6 +498,7 @@ def test():
             cur_date = x.strftime("%d-%m-%Y")
 
             #copy the order to the today's collection
+            #add the order to user's profile as well
             docs = db.collection('users').where("email", "==", f"{user}").get()
             global id
             for doc in docs:
@@ -506,9 +507,14 @@ def test():
             items = db.collection('users').document(id).collection('Buffer').get()
             for item in items:
                 i = item.to_dict()
+                #for admin
                 db.collection('Orders').document(f"{cur_date}").collection("current_orders").document(f"{user}").collection("order").add(i)
+                #for user
+                db.collection('users').document(id).collection('Orders').document(f"{cur_date}").collection("order").add(i)
 
-            db.collection('Orders').document(f"{cur_date}").collection("current_orders").document(f"{user}").collection("Order_Total").add({"total" : grand_total })
+            db.collection('Orders').document(f"{cur_date}").collection("current_orders").document(f"{user}").collection("order_total").add({"total" : grand_total })
+
+            db.collection('users').document(id).collection('Orders').document(f"{cur_date}").collection("order_total").add({"total" : grand_total })
 
             #after copying delete the buffer
             for item in items:
@@ -544,6 +550,26 @@ def test():
     elif request.method =='GET':
         return render_template('final.html' )  
 
+@app.route('/profile', methods=["GET"])
+def profile():
+    if request.method == "GET":
+        #get the email from the session
+        email = session.get('current_user', None)
+
+        #retrieve name from the email
+        docs = db.collection('users').where("email", "==", f"{email}").get()
+        global id
+        id = ""
+        for doc in docs:
+            id = doc.id
+            name = doc.to_dict()["name"]
+
+        allorders = db.collection('users').document(id).collection('Orders').get()
+        print(allorders)
+        for order in allorders:
+            print(order.id)
+
+        return render_template("profile.html", name = name, email = email)
 if __name__ == '__main__':
     app.run(debug=True)
     sess.init_app(app)
