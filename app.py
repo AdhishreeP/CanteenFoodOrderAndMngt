@@ -514,7 +514,7 @@ def test():
 
             db.collection('Orders').document(f"{cur_date}").collection("current_orders").document(f"{user}").collection("order_total").add({"total" : grand_total })
 
-            db.collection('users').document(id).collection('Orders').document(f"{cur_date}").collection("order_total").add({"total" : grand_total })
+            db.collection('users').document(id).collection('Orders').document(f"{cur_date}").set({"total" : grand_total })
 
             #after copying delete the buffer
             for item in items:
@@ -564,12 +564,37 @@ def profile():
             id = doc.id
             name = doc.to_dict()["name"]
 
-        allorders = db.collection('users').document(id).collection('Orders').get()
-        print(allorders)
-        for order in allorders:
-            print(order.id)
+        orders = db.collection('users').document(id).collection('Orders').get()
 
-        return render_template("profile.html", name = name, email = email)
+        #list to store all orders of a particular date
+        all_orders = []
+        for order in orders:
+            docs = order.to_dict()
+            ls=[]
+            # 1. add date
+            date = order.id
+            ls.append(date)
+
+            #2. add order summary
+            userorder = db.collection('users').document(id).collection('Orders').document(date).collection('order').get()
+            order_list = []
+            for eachorder in userorder:
+                orderdocs = eachorder.to_dict()
+                orderdict = {
+                    "item_name": orderdocs["item_name"], 
+                    "item_quantity": orderdocs["item_quantity"]
+                }
+                order_list.append(orderdict)            
+            ls.append(order_list)
+
+            # 3. add order total
+            total = docs["total"]               
+            ls.append(total)
+
+            #finally add the list to all_orders list
+            all_orders.append(ls)
+       
+        return render_template("profile.html", name = name, email = email, all_orders = all_orders)
 if __name__ == '__main__':
     app.run(debug=True)
     sess.init_app(app)
