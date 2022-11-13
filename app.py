@@ -41,7 +41,7 @@ def admin_login():
         # check if the entered email and password are same as the declared one
         if(admin_email == email and admin_password == password):
             # if they are correct redirect them to the orders page
-            return render_template('orders.html')
+            return redirect(url_for('new_orders'))
         else:
             message = "Email or password that you have entered is incorrect."
             return render_template('adminlogin.html', message=message)
@@ -595,6 +595,66 @@ def profile():
             all_orders.append(ls)
        
         return render_template("profile.html", name = name, email = email, all_orders = all_orders)
+
+@app.route('/new_orders', methods=["GET", "POST"])
+def new_orders():
+    if request.method == "GET":
+        data_to_display = []
+        # retrieving the system date
+        #retrieve the system date
+        import datetime
+        x = datetime.datetime.now()
+        todays_date = x.strftime("%d-%m-%Y")
+        
+        all_orders = []
+
+        # getting all the users
+        docs_users = db.collection('users').get()
+        for doc in docs_users:
+
+            # retrieving user email
+            user_info = doc.to_dict()
+            user_email = user_info['email']
+            user_name = user_info['name']
+
+            # getting the collection under the collection 'current_orders' for a particular user's order
+            order = db.collection("Orders", todays_date, "current_orders", user_email, "order")
+
+            # getting the collection under the collection 'current_orders' for a particular user's order total
+            order_total = db.collection("Orders", todays_date, "current_orders", user_email, "order_total")
+
+            # gettin order information
+            docs_order = order.get()
+            if docs_order == []:
+                pass
+            else:
+                print("User : ", user_name)
+                data_to_display = []
+                data_to_display.append(user_name)
+                order_ls = []
+
+                for doc in docs_order:
+                    order_info = doc.to_dict()
+                    item_name = order_info['item_name']
+                    item_quantity = order_info['item_quantity']
+                    order_ls.append(item_name)
+                    order_ls.append(item_quantity)
+                data_to_display.append(order_ls)
+
+                docs_order_total = order_total.get()
+
+                for doc in docs_order_total:
+                    order_total_info = doc.to_dict()
+                    total = order_total_info['total']
+                    data_to_display.append(total)
+                    print("Total : ", total)
+
+                all_orders.append(data_to_display)
+        if all_orders == []:
+            message = "No orders found for today ..!"
+            return render_template("orders.html", message=message)
+        else:
+            return render_template("orders.html", order=all_orders)
 if __name__ == '__main__':
     app.run(debug=True)
     sess.init_app(app)
