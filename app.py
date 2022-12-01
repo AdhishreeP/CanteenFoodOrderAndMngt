@@ -31,8 +31,12 @@ def admin_login():
     if request.method == "GET":
         return render_template('adminlogin.html')
     else:
-        admin_email = "gecaadmin@gmail.com"
-        admin_password = "admin123"
+        docs = db.collection('AdminDetails').get()
+        print(docs)
+        for doc in docs:
+            admin_data = doc.to_dict()
+            admin_email = admin_data['admin_email']
+            admin_password = admin_data['admin_password']
 
         # take the entered email and password by the user
         email = request.form["email"]
@@ -45,7 +49,6 @@ def admin_login():
         else:
             message = "Email or password that you have entered is incorrect."
             return render_template('adminlogin.html', message=message)
-
 
 #login for the user
 @app.route('/login', methods=["GET", "POST"])
@@ -596,47 +599,50 @@ def profile():
        
         return render_template("profile.html", name = name, email = email, all_orders = all_orders)
 
-@app.route('/new_orders', methods=["GET", "POST"])
+@app.route('/admin/new_orders', methods=["GET", "POST"])
 def new_orders():
-    if request.method == "GET":
+    
+    if request.method == "GET": 
         data_to_display = []
         # retrieving the system date
-        #retrieve the system date
+        # retrieve the system date
         import datetime
+
         x = datetime.datetime.now()
         todays_date = x.strftime("%d-%m-%Y")
-        
+
         all_orders = []
 
         # getting all the users
-        docs_users = db.collection('users').get()
+        docs_users = db.collection("users").get()
         for doc in docs_users:
 
             # retrieving user email
             user_info = doc.to_dict()
-            user_email = user_info['email']
-            user_name = user_info['name']
+            user_email = user_info["email"]
+            user_name = user_info["name"]
 
             # getting the collection under the collection 'current_orders' for a particular user's order
             order = db.collection("Orders", todays_date, "current_orders", user_email, "order")
 
             # getting the collection under the collection 'current_orders' for a particular user's order total
-            order_total = db.collection("Orders", todays_date, "current_orders", user_email, "order_total")
+            order_total = db.collection(
+                "Orders", todays_date, "current_orders", user_email, "order_total"
+            )
 
             # gettin order information
             docs_order = order.get()
             if docs_order == []:
                 pass
             else:
-                print("User : ", user_name)
                 data_to_display = []
                 data_to_display.append(user_name)
                 order_ls = []
 
                 for doc in docs_order:
                     order_info = doc.to_dict()
-                    item_name = order_info['item_name']
-                    item_quantity = order_info['item_quantity']
+                    item_name = order_info["item_name"]
+                    item_quantity = order_info["item_quantity"]
                     order_ls.append(item_name)
                     order_ls.append(item_quantity)
                 data_to_display.append(order_ls)
@@ -645,16 +651,126 @@ def new_orders():
 
                 for doc in docs_order_total:
                     order_total_info = doc.to_dict()
-                    total = order_total_info['total']
+                    total = order_total_info["total"]
                     data_to_display.append(total)
-                    print("Total : ", total)
 
                 all_orders.append(data_to_display)
+      
         if all_orders == []:
             message = "No orders found for today ..!"
             return render_template("orders.html", message=message)
         else:
+            
             return render_template("orders.html", order=all_orders)
+    global customer_email
+    if request.method == "POST":
+        import datetime
+
+        x = datetime.datetime.now()
+        todays_date = x.strftime("%d-%m-%Y")
+        #add the particular order to the served order
+        serve_item_customer = request.form.get('serve_item') #will give the name of the customer who has ordered for the particular date
+        
+        #retrive email from name
+        customer_email = db.collection('users').where(
+            "name", "==", f"{serve_item_customer}").stream()
+        
+        for email in customer_email:
+            u = email.to_dict()
+            customer_email = u["email"]
+
+        #now copy the whole collection of the customer from current_ordered to serverd_orders
+        order = db.collection("Orders", todays_date, "current_orders", customer_email, "order").get()
+        for o in order:
+            item = o.to_dict()
+            db.collection("Orders").document(f"{todays_date}").collection("served_orders").document(f"{customer_email}").collection("order").add(item)
+
+            print(item)
+        
+        #add order total as well in the served orders
+        order_total = db.collection("Orders", todays_date, "current_orders", customer_email, "order_total").get()
+        for o in order_total:
+            total= o.to_dict()
+            db.collection("Orders").document(f"{todays_date}").collection("served_orders").document(f"{customer_email}").collection("order_total").add(total)
+        
+        #delete the items from current order       
+        
+        #1. delete the order
+        delete_order = db.collection("Orders").document(f"{todays_date}").collection("current_orders").document(f"{customer_email}").collection("order").get()
+
+        for order in delete_order:
+            o = order.to_dict()
+            print(o)
+            order_id = order.id
+            db.collection("Orders").document(f"{todays_date}").collection("current_orders").document(f"{customer_email}").collection("order").document(order_id).delete()
+        
+        #2. delete the order total
+        delete_orderTotal = db.collection("Orders").document(f"{todays_date}").collection("current_orders").document(f"{customer_email}").collection("order_total").get()
+
+        for order in delete_orderTotal:
+            o = order.to_dict()
+            print(o)
+            total_id = order.id
+            db.collection("Orders").document(f"{todays_date}").collection("current_orders").document(f"{customer_email}").collection("order_total").document(total_id).delete()
+
+        #now again fetch the updated values from the db
+      
+        data_to_display = []
+        # retrieving the system date
+        #retrieve the system date
+
+        import datetime
+
+        x = datetime.datetime.now()
+        todays_date = x.strftime("%d-%m-%Y")
+
+        all_orders = []
+
+        # getting all the users
+        docs_users = db.collection("users").get()
+        for doc in docs_users:
+
+            # retrieving user email
+            user_info = doc.to_dict()
+            user_email = user_info["email"]
+            user_name = user_info["name"]
+
+            # getting the collection under the collection 'current_orders' for a particular user's order
+            order = db.collection("Orders", todays_date, "current_orders", user_email, "order")
+
+            # getting the collection under the collection 'current_orders' for a particular user's order total
+            order_total = db.collection(
+                "Orders", todays_date, "current_orders", user_email, "order_total"
+            )
+
+            # gettin order information
+            docs_order = order.get()
+            if docs_order == []:
+                pass
+            else:
+                data_to_display = []
+                data_to_display.append(user_name)
+                order_ls = []
+
+                for doc in docs_order:
+                    order_info = doc.to_dict()
+                    item_name = order_info["item_name"]
+                    item_quantity = order_info["item_quantity"]
+                    order_ls.append(item_name)
+                    order_ls.append(item_quantity)
+                data_to_display.append(order_ls)
+
+                docs_order_total = order_total.get()
+
+                for doc in docs_order_total:
+                    order_total_info = doc.to_dict()
+                    total = order_total_info["total"]
+                    data_to_display.append(total)
+
+                all_orders.append(data_to_display)
+
+
+        return render_template('orders.html', order=all_orders)
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug = True)
     sess.init_app(app)

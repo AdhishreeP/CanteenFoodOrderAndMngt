@@ -82,7 +82,7 @@
     <h1>New Orders</h1>
     <br>
   <hr size="10" width="100%" color="red">
-
+  <form action="/admin/new_orders" method="POST" style="text-align: center;">
   <table class="table">
       <thead>
       <tr>
@@ -119,11 +119,16 @@
           </td>
 
           <td rowspan="{{ or[1]|length }}">{{or[2]}}</td>
+          <!-- add serve button here -->
+          <!-- add id in the value of serve buyton -->
+          <td><button class="btn btn-danger" type="submit" name="serve_item" value="{{or[0]}}">Add To Served</button>   </td>
         </tr>
 
 </tbody>
       {% endfor %}
   </table>
+</form>
+
  <br>
 </div>
 <!-- JavaScript Bundle with Popper -->
