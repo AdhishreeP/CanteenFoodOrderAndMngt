@@ -599,6 +599,7 @@ def profile():
        
         return render_template("profile.html", name = name, email = email, all_orders = all_orders)
 
+#new orders for the current day
 @app.route('/admin/new_orders', methods=["GET", "POST"])
 def new_orders():
     
@@ -771,6 +772,69 @@ def new_orders():
 
 
         return render_template('orders.html', order=all_orders)
+
+#served orders for the current day
+@app.route('/admin/served_orders', methods=["GET"])
+def served_orders():
+    if request.method == "GET":
+        data_to_display = []
+       
+        #import the date
+        import datetime
+        x = datetime.datetime.now()
+        todays_date = x.strftime("%d-%m-%Y")
+        all_orders = []
+
+        docs_users = db.collection("users").get()
+        for doc in docs_users:
+
+            # retrieving user email
+            user_info = doc.to_dict()
+            user_email = user_info["email"]
+            user_name = user_info["name"]
+
+            # getting the collection under the collection 'served_orders' for a particular user's order
+            order = db.collection("Orders", todays_date, "served_orders", user_email, "order")
+
+            # getting the collection under the collection 'served_orders' for a particular user's order total
+            order_total = db.collection(
+                "Orders", todays_date, "served_orders", user_email, "order_total"
+            )
+
+            # gettin order information
+            docs_order = order.get()
+            if docs_order == []:
+                pass
+            else:
+                data_to_display = []
+                data_to_display.append(user_name)
+                order_ls = []
+
+                for doc in docs_order:
+                    order_info = doc.to_dict()
+                    item_name = order_info["item_name"]
+                    item_quantity = order_info["item_quantity"]
+                    order_ls.append(item_name)
+                    order_ls.append(item_quantity)
+                data_to_display.append(order_ls)
+
+                docs_order_total = order_total.get()
+
+                for doc in docs_order_total:
+                    order_total_info = doc.to_dict()
+                    total = order_total_info["total"]
+                    data_to_display.append(total)
+
+                all_orders.append(data_to_display)
+      
+        if all_orders == []:
+            message = "No served orders found for today!"
+            return render_template("servedOrders.html", message=message)
+        else:
+            
+            return render_template("servedOrders.html", order=all_orders)
+        
+
 if __name__ == '__main__':
     app.run(debug = True)
     sess.init_app(app)
