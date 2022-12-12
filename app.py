@@ -32,7 +32,7 @@ def admin_login():
         return render_template('adminlogin.html')
     else:
         docs = db.collection('AdminDetails').get()
-        print(docs)
+        
         for doc in docs:
             admin_data = doc.to_dict()
             admin_email = admin_data['admin_email']
@@ -187,7 +187,6 @@ def addItems():
 
         docs = db.collection('Food_Items').get()
         for doc in docs:
-            print(doc.to_dict())
             if doc.to_dict()['item_name'] == item_name:
                 flag = 1
                 break
@@ -197,6 +196,7 @@ def addItems():
         if flag == 0:
             data = {'item_name': item_name,
                     'item_img_link': item_image_link, 'item_price': item_price}
+
             db.collection('Food_Items').add(data)
             message = "Food Item Added successfully!"
             return render_template("addItems.html", message=message)
@@ -287,7 +287,7 @@ def order_summary():
     
     if request.method == "POST":
         remove_item_id = request.form.get('remove_item_id')
-        print(remove_item_id)
+        
         db.collection('users').document(key).collection('Buffer').document(remove_item_id).delete()
 
         data_to_display = []
@@ -353,7 +353,7 @@ def display_menu():
         return render_template("menu.html", data=data_to_display, ls = ls)
     else:     
         #set the session user here
-        # take the username from the login page (use session to retrive the username)
+        # take the user's email' from the login page (use session to retrive the email)
         user = session.get('current_user', None)
 
         #getting product id, name and quantity
@@ -526,7 +526,6 @@ def test():
             
             #send the confirmation message
             message = f"Your order is confirmed. Pay {grand_total} Rs. at the counter"
-            print("Order confirmed")
 
         elif request.form["action"] == "no":
             #retrieve the current user's session
@@ -545,9 +544,8 @@ def test():
                 db.collection('users').document(id_user).collection('Buffer').document(item_id).delete()
 
             #send the cancellation message
-            message = "Your order is cancelled"
-            print("Order Cancelled")
-        print("at final confirmation: ", grand_total)
+            message = "Your order is cancelled"          
+        
         return render_template('final.html', message = message, finalConfirm = finalConfirm )
 
     elif request.method =='GET':
@@ -686,8 +684,6 @@ def new_orders():
             item = o.to_dict()
             db.collection("Orders").document(f"{todays_date}").collection("served_orders").document(f"{customer_email}").collection("order").add(item)
 
-            print(item)
-        
         #add order total as well in the served orders
         order_total = db.collection("Orders", todays_date, "current_orders", customer_email, "order_total").get()
         for o in order_total:
@@ -769,7 +765,6 @@ def new_orders():
                     data_to_display.append(total)
 
                 all_orders.append(data_to_display)
-
 
         return render_template('orders.html', order=all_orders)
 
