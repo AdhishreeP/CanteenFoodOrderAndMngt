@@ -10,6 +10,7 @@ colorama==0.4.4
 docopt==0.6.2
 firebase-admin==5.0.0
 Flask==2.0.0
+flask_session==0.5.0
 google==3.0.0
 google-api-core==1.27.0
 google-api-python-client==2.4.0
